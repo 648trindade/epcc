@@ -41,7 +41,7 @@
 /*                                                           */
 /* Driver routine for the scatter benchmark.                 */
 /*-----------------------------------------------------------*/
-int scatterGather(int benchmarkType){
+int scatterGather(int benchmarkType) {
   int dataSizeIter, bufferSize;
 
   /* Initialise repsToDo to defaultReps */
@@ -49,57 +49,51 @@ int scatterGather(int benchmarkType){
 
   /* Start loop over data sizes */
   dataSizeIter = minDataSize; /* initialise dataSizeIter */
-  while (dataSizeIter <= maxDataSize){
-
+  while (dataSizeIter <= maxDataSize) {
     /* Calculate buffer size and allocate spaces for
      * data arrays.
      */
     bufferSize = dataSizeIter * numThreads;
 
-    if (benchmarkType == SCATTER){
+    if (benchmarkType == SCATTER) {
       allocateScatterGatherData(bufferSize, benchmarkType);
       /* perform benchmark warm-up */
       scatterKernel(warmUpIters, dataSizeIter);
       /* Test if scatter was successful */
       testScatterGather(bufferSize, benchmarkType);
-    }
-    else if (benchmarkType == GATHER){
+    } else if (benchmarkType == GATHER) {
       allocateScatterGatherData(bufferSize, benchmarkType);
       /* Perform benchmark warm-up */
       gatherKernel(warmUpIters, dataSizeIter);
       /* Test if gather was successful */
-      if (myMPIRank == GATHERROOT){
-	testScatterGather(bufferSize*numMPIprocs, benchmarkType);
+      if (myMPIRank == GATHERROOT) {
+        testScatterGather(bufferSize * numMPIprocs, benchmarkType);
       }
     }
 
     /* Initialise the benchmark */
     benchComplete = FALSE;
     /* Execute benchmark until target time is reached */
-    while (benchComplete != TRUE){
-
+    while (benchComplete != TRUE) {
       /* Start timer */
       MPI_Barrier(comm);
       startTime = MPI_Wtime();
 
-      if (benchmarkType == SCATTER){
-	/* Execute scatter for repsToDo repetitions */
-	scatterKernel(repsToDo, dataSizeIter);
-      }
-      else if (benchmarkType == GATHER){
-	/* Execute gather for repsToDo repetitions */
-	gatherKernel(repsToDo, dataSizeIter);
+      if (benchmarkType == SCATTER) {
+        /* Execute scatter for repsToDo repetitions */
+        scatterKernel(repsToDo, dataSizeIter);
+      } else if (benchmarkType == GATHER) {
+        /* Execute gather for repsToDo repetitions */
+        gatherKernel(repsToDo, dataSizeIter);
       }
 
       /* Stop timer */
       MPI_Barrier(comm);
       finishTime = MPI_Wtime();
-      totalTime = finishTime - startTime;
+      totalTime  = finishTime - startTime;
 
       /* Test if target time was reached */
-      if (myMPIRank==0) {
-	  benchComplete = repTimeCheck(totalTime, repsToDo);
-      }
+      if (myMPIRank == 0) { benchComplete = repTimeCheck(totalTime, repsToDo); }
 
       /* Ensure all procs have the same value of benchComplete */
       /* and repsToDo */
@@ -108,7 +102,7 @@ int scatterGather(int benchmarkType){
     }
 
     /* Master process sets benchmark result for reporting */
-    if (myMPIRank == 0){
+    if (myMPIRank == 0) {
       setReportParams(dataSizeIter, repsToDo, totalTime);
       printReport();
     }
@@ -131,7 +125,7 @@ int scatterGather(int benchmarkType){
 /* Each thread under a MPI process then reads its portion    */
 /* of scatterRecvBuf.                                        */
 /*-----------------------------------------------------------*/
-int scatterKernel(int totalReps, int dataSize){
+int scatterKernel(int totalReps, int dataSize) {
   int repIter, i;
   int totalSendBufElems, sendCount, recvCount;
 
@@ -142,27 +136,25 @@ int scatterKernel(int totalReps, int dataSize){
   sendCount = dataSize * numThreads;
   recvCount = sendCount;
 
-  for (repIter=0; repIter<totalReps; repIter++){
+  for (repIter = 0; repIter < totalReps; repIter++) {
     /* Master process writes to scatterSendBuf */
 
-    if (myMPIRank == SCATTERROOT){
-      for (i=0; i<totalSendBufElems; i++){
-	scatterSendBuf[i] = SCATTERSTARTVAL + i;
+    if (myMPIRank == SCATTERROOT) {
+      for (i = 0; i < totalSendBufElems; i++) {
+        scatterSendBuf[i] = SCATTERSTARTVAL + i;
       }
     }
 
     /* Scatter the data to other processes */
-    MPI_Scatter(scatterSendBuf, sendCount, MPI_INT, \
-		scatterRecvBuf, recvCount, MPI_INT, \
-		SCATTERROOT, comm);
+    MPI_Scatter(scatterSendBuf, sendCount, MPI_INT, scatterRecvBuf, recvCount,
+                MPI_INT, SCATTERROOT, comm);
 
     /* Each thread now reads its portion of scatterRecvBuf */
-#pragma omp parallel for default(none)			\
-    private(i)						\
-    shared(dataSize,recvCount,finalBuf,scatterRecvBuf)	\
-    schedule(static,dataSize)
-    for (i=0; i<recvCount; i++){ /* loop over all data in recv buffer */
-	finalBuf[i] = scatterRecvBuf[i];
+#pragma omp parallel for default(none) private(i)                              \
+  shared(dataSize, recvCount, finalBuf, scatterRecvBuf)                        \
+    schedule(static, dataSize)
+    for (i = 0; i < recvCount; i++) { /* loop over all data in recv buffer */
+      finalBuf[i] = scatterRecvBuf[i];
     }
   } /* End of loop over reps */
 
@@ -171,13 +163,13 @@ int scatterKernel(int totalReps, int dataSize){
 
 /*-----------------------------------------------------------*/
 /* gatherKernel                                              */
-/*														     */
+/*                                                           */
 /* Implements the gather benchmark.                          */
 /* Each thread writes part of its buffer then all data       */
 /* is gathered to the master process.                        */
 /*-----------------------------------------------------------*/
-int gatherKernel(int totalReps, int dataSize){
-  int repIter,i;
+int gatherKernel(int totalReps, int dataSize) {
+  int repIter, i;
   int totalRecvBufElems, sendCount, recvCount;
   int startVal;
 
@@ -192,27 +184,23 @@ int gatherKernel(int totalReps, int dataSize){
    */
   startVal = (myMPIRank * sendCount) + GATHERSTARTVAL;
 
-  for (repIter=0; repIter<totalReps; repIter++){
+  for (repIter = 0; repIter < totalReps; repIter++) {
     /* Each thread writes to its portion of gatherSendBuf */
-#pragma omp parallel for default(none)			\
-  private(i)						\
-  shared(gatherSendBuf,startVal,dataSize,sendCount)	\
-  schedule(static,dataSize)
-    for (i=0; i<sendCount; i++){
-      gatherSendBuf[i] = startVal + i;
-    }
+#pragma omp parallel for default(none) private(i)                              \
+  shared(gatherSendBuf, startVal, dataSize, sendCount)                         \
+    schedule(static, dataSize)
+    for (i = 0; i < sendCount; i++) { gatherSendBuf[i] = startVal + i; }
 
     /* Gather the data to GATHERROOT */
-    MPI_Gather(gatherSendBuf, sendCount, MPI_INT,\
-	       gatherRecvBuf, recvCount, MPI_INT,\
-	       GATHERROOT, comm);
+    MPI_Gather(gatherSendBuf, sendCount, MPI_INT, gatherRecvBuf, recvCount,
+               MPI_INT, GATHERROOT, comm);
 
     /* GATHERROOT process then copies its received data
      * to finalBuf.
      */
-    if (myMPIRank == GATHERROOT){
-      for (i=0; i<totalRecvBufElems; i++){
-	finalBuf[i] = gatherRecvBuf[i];
+    if (myMPIRank == GATHERROOT) {
+      for (i = 0; i < totalRecvBufElems; i++) {
+        finalBuf[i] = gatherRecvBuf[i];
       }
     }
   }
@@ -225,21 +213,19 @@ int gatherKernel(int totalReps, int dataSize){
 /*                                                           */
 /* Allocate memory for main data arrays                      */
 /*-----------------------------------------------------------*/
-int allocateScatterGatherData(int bufferSize, int benchmarkType){
-
-  if (benchmarkType == SCATTER){
+int allocateScatterGatherData(int bufferSize, int benchmarkType) {
+  if (benchmarkType == SCATTER) {
     /* scatterSendBuf is size (bufferSize * numMPIprocs) */
-    if (myMPIRank == SCATTERROOT){
-      scatterSendBuf = (int *) malloc((bufferSize * numMPIprocs) * sizeof(int));
+    if (myMPIRank == SCATTERROOT) {
+      scatterSendBuf = (int *)malloc((bufferSize * numMPIprocs) * sizeof(int));
     }
-    scatterRecvBuf = (int *) malloc(bufferSize * sizeof(int));
-    finalBuf = (int *)malloc(bufferSize * sizeof(int));
-  }
-  else if (benchmarkType == GATHER){
-    gatherSendBuf = (int *) malloc(bufferSize * sizeof(int));
-    if (myMPIRank == GATHERROOT){
-      gatherRecvBuf = (int *) malloc((bufferSize * numMPIprocs) * sizeof(int));
-      finalBuf = (int *) malloc((bufferSize * numMPIprocs) * sizeof(int));
+    scatterRecvBuf = (int *)malloc(bufferSize * sizeof(int));
+    finalBuf       = (int *)malloc(bufferSize * sizeof(int));
+  } else if (benchmarkType == GATHER) {
+    gatherSendBuf = (int *)malloc(bufferSize * sizeof(int));
+    if (myMPIRank == GATHERROOT) {
+      gatherRecvBuf = (int *)malloc((bufferSize * numMPIprocs) * sizeof(int));
+      finalBuf      = (int *)malloc((bufferSize * numMPIprocs) * sizeof(int));
     }
   }
 
@@ -251,23 +237,18 @@ int allocateScatterGatherData(int bufferSize, int benchmarkType){
 /*                                                           */
 /* Free memory of main data arrays.                          */
 /*-----------------------------------------------------------*/
-int freeScatterGatherData(int benchmarkType){
-
-  if (benchmarkType == SCATTER){
-    if (myMPIRank == SCATTERROOT){
-      free(scatterSendBuf);
-    }
+int freeScatterGatherData(int benchmarkType) {
+  if (benchmarkType == SCATTER) {
+    if (myMPIRank == SCATTERROOT) { free(scatterSendBuf); }
     free(scatterRecvBuf);
     free(finalBuf);
-  }
-  else if (benchmarkType == GATHER){
+  } else if (benchmarkType == GATHER) {
     free(gatherSendBuf);
-    if (myMPIRank == GATHERROOT){
+    if (myMPIRank == GATHERROOT) {
       free(gatherRecvBuf);
       free(finalBuf);
     }
   }
-
 
   return 0;
 }
@@ -278,7 +259,7 @@ int freeScatterGatherData(int benchmarkType){
 /* Verifies that the scatter and gahter benchmarks worked    */
 /* correctly.                                                */
 /*-----------------------------------------------------------*/
-int testScatterGather(int sizeofBuffer, int benchmarkType){
+int testScatterGather(int sizeofBuffer, int benchmarkType) {
   int i, startVal;
   int testFlag, reduceFlag;
   int *testBuf;
@@ -287,40 +268,32 @@ int testScatterGather(int sizeofBuffer, int benchmarkType){
   testFlag = TRUE;
 
   /* Allocate space for testBuf */
-  testBuf = (int *) malloc (sizeofBuffer * sizeof(int));
+  testBuf = (int *)malloc(sizeofBuffer * sizeof(int));
 
-  if (benchmarkType == SCATTER){
+  if (benchmarkType == SCATTER) {
     /* Find the start scatter value for each MPI process */
     startVal = (myMPIRank * sizeofBuffer) + SCATTERSTARTVAL;
-  }
-  else if (benchmarkType == GATHER){
+  } else if (benchmarkType == GATHER) {
     /* startVal is GATHERSTARTVAL */
     startVal = GATHERSTARTVAL;
   }
 
   /* Fill testBuf with correct values */
-  for (i=0; i<sizeofBuffer; i++){
-    testBuf[i] = startVal + i;
-  }
+  for (i = 0; i < sizeofBuffer; i++) { testBuf[i] = startVal + i; }
 
   /* Compare each element of finalBuf with testBuf */
-  for (i=0; i<sizeofBuffer; i++){
-    if (finalBuf[i] != testBuf[i]){
-      testFlag = FALSE;
-    }
+  for (i = 0; i < sizeofBuffer; i++) {
+    if (finalBuf[i] != testBuf[i]) { testFlag = FALSE; }
   }
 
   /* For scatter: reduce testFlag into master with
    * logical AND operator.
    */
-  if (benchmarkType == SCATTER){
+  if (benchmarkType == SCATTER) {
     MPI_Reduce(&testFlag, &reduceFlag, 1, MPI_INT, MPI_LAND, 0, comm);
     /* Master then sets testOutcome using reduceFlag */
-    if (myMPIRank == 0){
-      setTestOutcome(reduceFlag);
-    }
-  }
-  else if (benchmarkType == GATHER){
+    if (myMPIRank == 0) { setTestOutcome(reduceFlag); }
+  } else if (benchmarkType == GATHER) {
     setTestOutcome(testFlag);
   }
 

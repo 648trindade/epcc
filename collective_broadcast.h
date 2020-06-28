@@ -36,11 +36,11 @@
 #include "benchmarkSetup.h"
 #include "output.h"
 #include "parallelEnvironment.h"
+
 #include <stdio.h>
 
 #define BROADCASTNUM 100
 #define BROADCASTROOT 0 /* Source of broadcast */
-
 
 /* function prototypes */
 int broadcast();

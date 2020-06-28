@@ -41,86 +41,75 @@
 /*                                                           */
 /* Driver subroutine for the barrier benchmark.              */
 /*-----------------------------------------------------------*/
-int barrierDriver(){
-	/* initialise repsToDo to defaultReps */
-	repsToDo = defaultReps;
+int barrierDriver() {
+  /* initialise repsToDo to defaultReps */
+  repsToDo = defaultReps;
 
-	/* perform warm-up for benchmark */
-	barrierKernel(warmUpIters);
+  /* perform warm-up for benchmark */
+  barrierKernel(warmUpIters);
 
-	/* Initialise the benchmark */
-	benchComplete = FALSE;
+  /* Initialise the benchmark */
+  benchComplete = FALSE;
 
-	/* Execute benchmark until target time is reached */
-	while (benchComplete != TRUE){
-		/* Start timer */
-		MPI_Barrier(comm);
-		startTime = MPI_Wtime();
+  /* Execute benchmark until target time is reached */
+  while (benchComplete != TRUE) {
+    /* Start timer */
+    MPI_Barrier(comm);
+    startTime = MPI_Wtime();
 
-		/* Execute benchmark for repsToDo repetitions */
-		barrierKernel(repsToDo);
+    /* Execute benchmark for repsToDo repetitions */
+    barrierKernel(repsToDo);
 
-		/* Stop timer */
-		MPI_Barrier(comm);
-		finishTime = MPI_Wtime();
-		totalTime = finishTime - startTime;
+    /* Stop timer */
+    MPI_Barrier(comm);
+    finishTime = MPI_Wtime();
+    totalTime  = finishTime - startTime;
 
-		/* Test if target time was reached with number of
-		 * repetitions.
-		 */
-		if (myMPIRank==0){
-		  benchComplete = repTimeCheck(totalTime, repsToDo);
-		}
-		/* Ensure all procs have the same value of benchComplete */
-		/* and repsToDo */
-		MPI_Bcast(&benchComplete, 1, MPI_INT, 0, comm);
-		MPI_Bcast(&repsToDo, 1, MPI_INT, 0, comm);
-	}
+    /* Test if target time was reached with number of
+     * repetitions.
+     */
+    if (myMPIRank == 0) { benchComplete = repTimeCheck(totalTime, repsToDo); }
+    /* Ensure all procs have the same value of benchComplete */
+    /* and repsToDo */
+    MPI_Bcast(&benchComplete, 1, MPI_INT, 0, comm);
+    MPI_Bcast(&repsToDo, 1, MPI_INT, 0, comm);
+  }
 
-	/* Master process sets benchmark results */
-	if (myMPIRank == 0){
-		/* no unit test, hardwire test result to pass */
-		setTestOutcome(TRUE);
-		setReportParams(1,repsToDo,totalTime);
-		printReport();
-	}
+  /* Master process sets benchmark results */
+  if (myMPIRank == 0) {
+    /* no unit test, hardwire test result to pass */
+    setTestOutcome(TRUE);
+    setReportParams(1, repsToDo, totalTime);
+    printReport();
+  }
 
-	return 0;
+  return 0;
 }
 
 /*-----------------------------------------------------------*/
 /* barrierKernel                                             */
-/* 															 */
+/*                                                           */
 /* Main kernel for barrier benchmark.                        */
 /* First threads under each process synchronise with an      */
 /* OMP BARRIER. Then a MPI barrier synchronises each MPI     */
 /* process. MPI barrier is called within a OpenMP master     */
 /* directive.                                                */
 /*-----------------------------------------------------------*/
-int barrierKernel(int totalReps){
-	int repIter;
+int barrierKernel(int totalReps) {
+  int repIter;
 
-	/* Open the parallel region */
-#pragma omp parallel default(none) \
-	private(repIter) \
-	shared(totalReps,comm)
-	{
-	for (repIter=0; repIter<totalReps; repIter++){
-
-		/* Threads synchronise with an OpenMP barrier */
+  /* Open the parallel region */
+#pragma omp parallel default(none) private(repIter) shared(totalReps, comm)
+  {
+    for (repIter = 0; repIter < totalReps; repIter++) {
+      /* Threads synchronise with an OpenMP barrier */
 #pragma omp barrier
 
-		/* Master threads on each process now synchronise */
+      /* Master threads on each process now synchronise */
 #pragma omp master
-		{
-		MPI_Barrier(comm);
-		}
-	}
-	}
+      { MPI_Barrier(comm); }
+    }
+  }
 
-	return 0;
+  return 0;
 }
-
-
-
-

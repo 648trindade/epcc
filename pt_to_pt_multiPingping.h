@@ -33,9 +33,10 @@
 #ifndef PT_TO_PT_MULTIPINGPING_H_
 #define PT_TO_PT_MULTIPINGPING_H_
 
-#include "parallelEnvironment.h"
 #include "benchmarkSetup.h"
 #include "output.h"
+#include "parallelEnvironment.h"
+
 #include <stdio.h>
 
 /* function prototypes */

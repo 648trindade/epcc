@@ -36,6 +36,7 @@
 #include "benchmarkSetup.h"
 #include "output.h"
 #include "parallelEnvironment.h"
+
 #include <stdio.h>
 
 #define SCATTERROOT 0

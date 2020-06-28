@@ -33,9 +33,10 @@
 #ifndef OUTPUT_H_
 #define OUTPUT_H_
 
+#include "benchmarkSetup.h"
+
 #include <stdio.h>
 #include <string.h>
-#include "benchmarkSetup.h"
 
 /* function prototypes */
 int printHeader();
@@ -52,22 +53,21 @@ int printMultiProcInfo(int printNode, int pairWorldRank, char *pairProcName);
 int printBalanceError();
 
 /* define report data type */
-struct report
-     {
-		char benchName[30];
-		int benchNumber;
-		int supported;
-		int dataSize;
-		int bytes;
-		char testOutcome[5];
-		int numReps;
-		double benchTime;
-		double timePerRep;
-		/* parallel environment info */
-		int numMPIprocs;
-		int numThreads;
-		int supportLevel;
-     };
+struct report {
+  char benchName[30];
+  int benchNumber;
+  int supported;
+  int dataSize;
+  int bytes;
+  char testOutcome[5];
+  int numReps;
+  double benchTime;
+  double timePerRep;
+  /* parallel environment info */
+  int numMPIprocs;
+  int numThreads;
+  int supportLevel;
+};
 
 /* variable declaration */
 struct report benchReport;

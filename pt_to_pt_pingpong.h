@@ -33,9 +33,10 @@
 #ifndef PT_TO_PT_PINGPONG_H_
 #define PT_TO_PT_PINGPONG_H_
 
-#include "parallelEnvironment.h"
 #include "benchmarkSetup.h"
 #include "output.h"
+#include "parallelEnvironment.h"
+
 #include <stdio.h>
 
 /* function prototypes */
@@ -54,6 +55,5 @@ int *pingSendBuf, *pingRecvBuf;
 int *pongSendBuf, *pongRecvBuf;
 int *finalRecvBuf;
 int *testBuf;
-
 
 #endif /* PT_TO_PT_PINGPONG_H_ */

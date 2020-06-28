@@ -39,11 +39,12 @@
 #ifndef PARALLELENVIRONMENT_H_
 #define PARALLELENVIRONMENT_H_
 
+#include "benchmarkSetup.h"
+
 #include <mpi.h>
+#include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <omp.h>
-#include "benchmarkSetup.h"
 
 /* function prototypes */
 int benchmarkSupport(int required);
@@ -69,7 +70,7 @@ MPI_Status status;
 char myProcName[MPI_MAX_PROCESSOR_NAME];
 int procNameLen;
 MPI_Request requestID;
-MPI_Status statusArray[4]; /* for haloexchange */
+MPI_Status statusArray[4];   /* for haloexchange */
 MPI_Request requestArray[4]; /* for haloexchange */
 int leftNeighbour, rightNeighbour;
 int sizeInteger;

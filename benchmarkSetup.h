@@ -37,6 +37,7 @@
 #ifndef BENCHMARKSETUP_H_
 #define BENCHMARKSETUP_H_
 #include "parallelEnvironment.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -47,16 +48,16 @@
 #define NUM_BENCHMARKS 22
 #define MAXSTRING 30
 
-#define FINISHED 999 
+#define FINISHED 999
 #define ERROR 100
 
-#define LASTPPID 5 /* id of last pingpong/pingping bench */
-#define LAST_PT_PT_ID 8 /* id of last point-to-point bench */
+#define LASTPPID 5       /* id of last pingpong/pingping bench */
+#define LAST_PT_PT_ID 8  /* id of last point-to-point bench */
 #define LASTMULTIPPID 14 /* id of last multi pt-to-pt bench */
 
 /*Benchmark types */
 #define MASTERONLY 1
-#define FUNNELLED  2
+#define FUNNELLED 2
 #define MULTIPLE 3
 #define REDUCE 4
 #define ALLREDUCE 5
@@ -79,7 +80,7 @@ char benchmarkList[NUM_BENCHMARKS][MAXSTRING];
 
 int warmUpIters; /* number of iterations of warmup loop */
 int defaultReps; /* the default number of repetitions */
-int repsToDo; /* reps to do for a benchmark */
+int repsToDo;    /* reps to do for a benchmark */
 int minDataSize;
 int maxDataSize;
 double targetTime; /* threshold time for benchmark */
@@ -88,8 +89,6 @@ int benchComplete;
 int benchmarkNumber;
 
 /* variables for  timing */
-double startTime,finishTime, totalTime;
-
-
+double startTime, finishTime, totalTime;
 
 #endif /* BENCHMARKSETUP_H_ */

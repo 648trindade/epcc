@@ -37,74 +37,69 @@
 #include "collective_broadcast.h"
 
 /*-----------------------------------------------------------*/
-/* broadcast                                   	             */
-/* 															 */
+/* broadcast                                                 */
+/*                                                           */
 /* Driver subroutine for the broadcast benchmark.            */
 /*-----------------------------------------------------------*/
-int broadcast(){
-	int dataSizeIter, sizeofFinalBuf;
+int broadcast() {
+  int dataSizeIter, sizeofFinalBuf;
 
-	/* initialise repsToDo to defaultReps */
-	repsToDo = defaultReps;
+  /* initialise repsToDo to defaultReps */
+  repsToDo = defaultReps;
 
-	/* Start loop over data sizes */
-	dataSizeIter = minDataSize;
+  /* Start loop over data sizes */
+  dataSizeIter = minDataSize;
 
-	while (dataSizeIter <= maxDataSize){
-		/* allocate space for main data arrays */
-		allocateBroadcastData(dataSizeIter);
+  while (dataSizeIter <= maxDataSize) {
+    /* allocate space for main data arrays */
+    allocateBroadcastData(dataSizeIter);
 
-		/* perform benchmark warm-up */
-		broadcastKernel(warmUpIters,dataSizeIter);
+    /* perform benchmark warm-up */
+    broadcastKernel(warmUpIters, dataSizeIter);
 
-		/* set sizeofFinalBuf and test if broadcast was a success */
-		sizeofFinalBuf = dataSizeIter * numThreads;
-		testBroadcast(sizeofFinalBuf);
+    /* set sizeofFinalBuf and test if broadcast was a success */
+    sizeofFinalBuf = dataSizeIter * numThreads;
+    testBroadcast(sizeofFinalBuf);
 
-		/* Initialise the benchmark */
-		benchComplete = FALSE;
+    /* Initialise the benchmark */
+    benchComplete = FALSE;
 
-		/* Execute benchmark until target time is reached */
-		while (benchComplete != TRUE){
-			/* Start timer */
-			MPI_Barrier(comm);
-			startTime = MPI_Wtime();
+    /* Execute benchmark until target time is reached */
+    while (benchComplete != TRUE) {
+      /* Start timer */
+      MPI_Barrier(comm);
+      startTime = MPI_Wtime();
 
-			/* Execute broadcast for repsToDo repetitions */
-			broadcastKernel(repsToDo, dataSizeIter);
+      /* Execute broadcast for repsToDo repetitions */
+      broadcastKernel(repsToDo, dataSizeIter);
 
-			/* Stop timer */
-			MPI_Barrier(comm);
-			finishTime = MPI_Wtime();
-			totalTime = finishTime - startTime;
+      /* Stop timer */
+      MPI_Barrier(comm);
+      finishTime = MPI_Wtime();
+      totalTime  = finishTime - startTime;
 
-			/* Test if target time was reached */
-			if (myMPIRank==0){
-			  benchComplete = repTimeCheck(totalTime, repsToDo);
-			}
-			/* Ensure all procs have the same value of benchComplete */
-			/* and repsToDo */
-			MPI_Bcast(&benchComplete, 1, MPI_INT, 0, comm);
-			MPI_Bcast(&repsToDo, 1, MPI_INT, 0, comm);
+      /* Test if target time was reached */
+      if (myMPIRank == 0) { benchComplete = repTimeCheck(totalTime, repsToDo); }
+      /* Ensure all procs have the same value of benchComplete */
+      /* and repsToDo */
+      MPI_Bcast(&benchComplete, 1, MPI_INT, 0, comm);
+      MPI_Bcast(&repsToDo, 1, MPI_INT, 0, comm);
+    }
 
-		}
+    /* master process sets benchmark result for reporting */
+    if (myMPIRank == 0) {
+      setReportParams(dataSizeIter, repsToDo, totalTime);
+      printReport();
+    }
 
-		/* master process sets benchmark result for reporting */
-		if (myMPIRank == 0){
-			setReportParams(dataSizeIter, repsToDo, totalTime);
-			printReport();
+    /* Free allocated data */
+    freeBroadcastData();
 
-		}
+    /* Double dataSize and loop again */
+    dataSizeIter = dataSizeIter * 2;
+  }
 
-		/* Free allocated data */
-		freeBroadcastData();
-
-		/* Double dataSize and loop again */
-		dataSizeIter = dataSizeIter * 2;
-
-	}
-
-	return 0;
+  return 0;
 }
 
 /*-----------------------------------------------------------*/
@@ -114,34 +109,30 @@ int broadcast(){
 /* At the start one process owns the data. After, all        */
 /* processes and threads have a copy of the data.            */
 /*-----------------------------------------------------------*/
-int broadcastKernel(int totalReps, int dataSize){
-	int repIter, i;
-	int startPos; /* Start position in finalBroadcastBuf for each thread */
+int broadcastKernel(int totalReps, int dataSize) {
+  int repIter, i;
+  int startPos; /* Start position in finalBroadcastBuf for each thread */
 
-	for (repIter=0; repIter<totalReps; repIter++){
+  for (repIter = 0; repIter < totalReps; repIter++) {
+    /* Master MPI process writes to broadcastBuf */
+    if (myMPIRank == BROADCASTROOT) {
+      for (i = 0; i < dataSize; i++) { broadcastBuf[i] = BROADCASTNUM; }
+    }
+    /* Broadcast array to all other processes */
+    MPI_Bcast(broadcastBuf, dataSize, MPI_INT, BROADCASTROOT, comm);
 
-		/* Master MPI process writes to broadcastBuf */
-		if (myMPIRank == BROADCASTROOT){
-			for (i=0; i<dataSize; i++){
-				broadcastBuf[i] = BROADCASTNUM;
-			}
-		}
-		/* Broadcast array to all other processes */
-		MPI_Bcast(broadcastBuf, dataSize, MPI_INT, BROADCASTROOT, comm);
+    /* Each thread copies broadcastBuf to its portion of finalBroadcastBuf */
+#pragma omp parallel default(none) private(i, startPos)                        \
+  shared(dataSize, finalBroadcastBuf, broadcastBuf)
+    {
+      startPos = ((myThreadID)*dataSize);
+      for (i = 0; i < dataSize; i++) {
+        finalBroadcastBuf[startPos + i] = broadcastBuf[i];
+      }
+    }
+  }
 
-		/* Each thread copies broadcastBuf to its portion of finalBroadcastBuf */
-#pragma omp parallel default(none) \
-	private(i,startPos) \
-	shared(dataSize,finalBroadcastBuf,broadcastBuf)
-		{
-		startPos = ((myThreadID) * dataSize);
-		for (i=0; i<dataSize; i++){
-			finalBroadcastBuf[startPos + i] = broadcastBuf[i];
-		}
-		}
-	}
-
-	return 0;
+  return 0;
 }
 
 /*-----------------------------------------------------------*/
@@ -150,14 +141,13 @@ int broadcastKernel(int totalReps, int dataSize){
 /* Allocate memory for the main data arrays in the           */
 /* broadcast operation.                                      */
 /*-----------------------------------------------------------*/
-int allocateBroadcastData(int bufferSize){
+int allocateBroadcastData(int bufferSize) {
+  broadcastBuf = (int *)malloc(bufferSize * sizeof(int));
 
-	broadcastBuf = (int *)malloc(bufferSize * sizeof(int));
+  /* finalBroadcastBuf is of size dataSize*numThreads */
+  finalBroadcastBuf = (int *)malloc((bufferSize * numThreads) * sizeof(int));
 
-	/* finalBroadcastBuf is of size dataSize*numThreads */
-	finalBroadcastBuf = (int *)malloc((bufferSize*numThreads)*sizeof(int));
-
-	return 0;
+  return 0;
 }
 
 /*-----------------------------------------------------------*/
@@ -165,12 +155,11 @@ int allocateBroadcastData(int bufferSize){
 /*                                                           */
 /* Free memory of main data arrays.                          */
 /*-----------------------------------------------------------*/
-int freeBroadcastData(){
+int freeBroadcastData() {
+  free(broadcastBuf);
+  free(finalBroadcastBuf);
 
-	free(broadcastBuf);
-	free(finalBroadcastBuf);
-
-	return 0;
+  return 0;
 }
 
 /*-----------------------------------------------------------*/
@@ -178,26 +167,22 @@ int freeBroadcastData(){
 /*                                                           */
 /* Verifies that the broadcast benchmark worked correctly.   */
 /*-----------------------------------------------------------*/
-int testBroadcast(int bufferSize){
-	int i, testFlag, reduceFlag;
+int testBroadcast(int bufferSize) {
+  int i, testFlag, reduceFlag;
 
-	/* Initialise testFlag to true */
-	testFlag = TRUE;
+  /* Initialise testFlag to true */
+  testFlag = TRUE;
 
-	/* Compare each element of finalBroadcast with BROADCASTNUM */
-	for (i=0; i<bufferSize; i++){
-		if (finalBroadcastBuf[i] != BROADCASTNUM){
-			testFlag = FALSE;
-		}
-	}
+  /* Compare each element of finalBroadcast with BROADCASTNUM */
+  for (i = 0; i < bufferSize; i++) {
+    if (finalBroadcastBuf[i] != BROADCASTNUM) { testFlag = FALSE; }
+  }
 
-	/* Reduce testFlag to master with logical AND operation */
-	MPI_Reduce(&testFlag, &reduceFlag, 1, MPI_INT, MPI_LAND, 0, comm);
+  /* Reduce testFlag to master with logical AND operation */
+  MPI_Reduce(&testFlag, &reduceFlag, 1, MPI_INT, MPI_LAND, 0, comm);
 
-	/* Master then sets testOutcome using reduceFlag */
-	if (myMPIRank == 0){
-		setTestOutcome(testFlag);
-	}
+  /* Master then sets testOutcome using reduceFlag */
+  if (myMPIRank == 0) { setTestOutcome(testFlag); }
 
-	return 0;
+  return 0;
 }

@@ -44,7 +44,7 @@
 /*                                                           */
 /* Driver subroutine for the multi-pingping benchmark.       */
 /*-----------------------------------------------------------*/
-int multiPingping(int benchmarkType){
+int multiPingping(int benchmarkType) {
   int dataSizeIter;
   char otherProcName[MPI_MAX_PROCESSOR_NAME];
   int balance;
@@ -56,11 +56,9 @@ int multiPingping(int benchmarkType){
      on pingNodeA and pingNodeB. */
   balance = crossCommBalance(pingNodeA, pingNodeB);
   /* If not balanced.. */
-  if (balance == FALSE){
+  if (balance == FALSE) {
     /* ..master prints error */
-    if (myMPIRank == 0){
-      printBalanceError();
-    }
+    if (myMPIRank == 0) { printBalanceError(); }
     /* ..and all process exit function. */
     return 1;
   }
@@ -82,9 +80,7 @@ int multiPingping(int benchmarkType){
   MPI_Barrier(comm);
 
   /* Master process then prints report column headings */
-  if (myMPIRank == 0){
-    printBenchHeader();
-  }
+  if (myMPIRank == 0) { printBenchHeader(); }
 
   /* Initialise repsToDo to defaultReps at start of benchmark */
   repsToDo = defaultReps;
@@ -92,7 +88,7 @@ int multiPingping(int benchmarkType){
   dataSizeIter = minDataSize;
 
   /* Start loop over data sizes */
-  while (dataSizeIter <= maxDataSize){
+  while (dataSizeIter <= maxDataSize) {
     /* set size of buffer */
     sizeofBuffer = dataSizeIter * numThreads;
 
@@ -100,15 +96,13 @@ int multiPingping(int benchmarkType){
     allocateMultiPingpingData(sizeofBuffer);
 
     /* warm-up */
-    if (benchmarkType == MASTERONLY){
+    if (benchmarkType == MASTERONLY) {
       /* Masteronly warm-up */
       masteronlyMultiPingping(warmUpIters, dataSizeIter);
-    }
-    else if (benchmarkType == FUNNELLED){
+    } else if (benchmarkType == FUNNELLED) {
       /* Funnelled warm-up sweep */
       funnelledMultiPingping(warmUpIters, dataSizeIter);
-    }
-    else if (benchmarkType == MULTIPLE){
+    } else if (benchmarkType == MULTIPLE) {
       /* Multiple pingpong warm-up */
       multipleMultiPingping(warmUpIters, dataSizeIter);
     }
@@ -120,23 +114,20 @@ int multiPingping(int benchmarkType){
     benchComplete = FALSE;
 
     /* Keep executing benchmark until target time is reached */
-    while (benchComplete != TRUE){
-
+    while (benchComplete != TRUE) {
       /* MPI_Barrier to synchronise processes.
-	 Then start the timer. */
+         Then start the timer. */
       MPI_Barrier(comm);
       startTime = MPI_Wtime();
 
-      if (benchmarkType == MASTERONLY){
-	/* Execute masteronly multipingpong repsToDo times */
-	masteronlyMultiPingping(repsToDo, dataSizeIter);
-      }
-      else if (benchmarkType == FUNNELLED){
-	/* Execute funnelled multipingpong */
-	funnelledMultiPingping(repsToDo, dataSizeIter);
-      }
-      else if (benchmarkType == MULTIPLE){
-	multipleMultiPingping(repsToDo, dataSizeIter);
+      if (benchmarkType == MASTERONLY) {
+        /* Execute masteronly multipingpong repsToDo times */
+        masteronlyMultiPingping(repsToDo, dataSizeIter);
+      } else if (benchmarkType == FUNNELLED) {
+        /* Execute funnelled multipingpong */
+        funnelledMultiPingping(repsToDo, dataSizeIter);
+      } else if (benchmarkType == MULTIPLE) {
+        multipleMultiPingping(repsToDo, dataSizeIter);
       }
 
       /* Stop the timer..MPI_Barrier to synchronise processes
@@ -144,12 +135,10 @@ int multiPingping(int benchmarkType){
        */
       MPI_Barrier(comm);
       finishTime = MPI_Wtime();
-      totalTime = finishTime - startTime;
+      totalTime  = finishTime - startTime;
 
       /* Call repTimeCheck to check if target time is reached. */
-      if (myMPIRank==0){
-	benchComplete = repTimeCheck(totalTime, repsToDo);
-      }
+      if (myMPIRank == 0) { benchComplete = repTimeCheck(totalTime, repsToDo); }
       /* Ensure all procs have the same value of benchComplete */
       /* and repsToDo */
       MPI_Bcast(&benchComplete, 1, MPI_INT, 0, comm);
@@ -157,7 +146,7 @@ int multiPingping(int benchmarkType){
     } /* End of loop to check if benchComplete is true */
 
     /* Master process sets benchmark results */
-    if (myMPIRank == 0){
+    if (myMPIRank == 0) {
       setReportParams(dataSizeIter, repsToDo, totalTime);
       printReport();
     }
@@ -180,44 +169,40 @@ int multiPingping(int benchmarkType){
 /* MPI communication takes place outside of the parallel     */
 /* region.                                                   */
 /*-----------------------------------------------------------*/
-int masteronlyMultiPingping(int totalReps, int dataSize){
+int masteronlyMultiPingping(int totalReps, int dataSize) {
   int repIter, i;
   int destRank;
 
   /* set destRank to ID of other process */
-  if (crossCommRank == pingNodeA){
+  if (crossCommRank == pingNodeA) {
     destRank = pingNodeB;
-  }
-  else if (crossCommRank == pingNodeB){
+  } else if (crossCommRank == pingNodeB) {
     destRank = pingNodeA;
   }
 
   /* loop totalRep times */
-  for (repIter=1; repIter<=totalReps; repIter++){
-
-    if ((crossCommRank == pingNodeA) || (crossCommRank == pingNodeB) ){
-
+  for (repIter = 1; repIter <= totalReps; repIter++) {
+    if ((crossCommRank == pingNodeA) || (crossCommRank == pingNodeB)) {
       /* Each thread writes its globalID to pingSendBuf
        * with a parallel for directive.
        */
-#pragma omp parallel for default(none)				\
-  private(i)							\
-  shared(pingSendBuf,dataSize,sizeofBuffer,globalIDarray)	\
-  schedule(static,dataSize)
+#pragma omp parallel for default(none) private(i)                              \
+  shared(pingSendBuf, dataSize, sizeofBuffer, globalIDarray)                   \
+    schedule(static, dataSize)
 
-      for (i=0; i<sizeofBuffer; i++){
-	pingSendBuf[i] = globalIDarray[myThreadID];
+      for (i = 0; i < sizeofBuffer; i++) {
+        pingSendBuf[i] = globalIDarray[myThreadID];
       }
 
       /* Process calls non-blocking send to start transfer of
        * pingSendBuf to other process.
        */
-      MPI_Isend(pingSendBuf, sizeofBuffer, MPI_INT, destRank, TAG,\
-		crossComm, &requestID);
+      MPI_Isend(pingSendBuf, sizeofBuffer, MPI_INT, destRank, TAG, crossComm,
+                &requestID);
 
       /* Processes then wait for message from other process. */
-      MPI_Recv(pingRecvBuf, sizeofBuffer, MPI_INT, destRank, TAG, \
-	       crossComm, &status);
+      MPI_Recv(pingRecvBuf, sizeofBuffer, MPI_INT, destRank, TAG, crossComm,
+               &status);
 
       /* Finish the send operation with an MPI_Wait */
       MPI_Wait(&requestID, &status);
@@ -225,15 +210,11 @@ int masteronlyMultiPingping(int totalReps, int dataSize){
       /* Threads under the MPI processes read their part of the
        * received buffer.
        */
-#pragma omp parallel for default(none)				\
-  private(i)							\
-  shared(finalRecvBuf,dataSize,sizeofBuffer,pingRecvBuf)	\
-  schedule(static,dataSize)
+#pragma omp parallel for default(none) private(i)                              \
+  shared(finalRecvBuf, dataSize, sizeofBuffer, pingRecvBuf)                    \
+    schedule(static, dataSize)
 
-      for (i=0; i<sizeofBuffer; i++){
-	finalRecvBuf[i] = pingRecvBuf[i];
-      }
-
+      for (i = 0; i < sizeofBuffer; i++) { finalRecvBuf[i] = pingRecvBuf[i]; }
     }
   } /* End repetitions loop */
 
@@ -248,139 +229,123 @@ int masteronlyMultiPingping(int totalReps, int dataSize){
 /* Inter-process communication takes place inside the        */
 /* OpenMP parallel region by the master thread.              */
 /*-----------------------------------------------------------*/
-int funnelledMultiPingping(int totalReps, int dataSize){
+int funnelledMultiPingping(int totalReps, int dataSize) {
   int repIter, i;
   int destRank;
 
   /* Set destRank to id of other process */
-  if (crossCommRank == pingNodeA){
+  if (crossCommRank == pingNodeA) {
     destRank = pingNodeB;
-  }
-  else if (crossCommRank == pingNodeB){
+  } else if (crossCommRank == pingNodeB) {
     destRank = pingNodeA;
   }
 
   /* Open the parallel region */
-#pragma omp parallel default(none)				\
-  private(i,repIter)						\
-  shared(dataSize,sizeofBuffer,pingSendBuf,globalIDarray)	\
-  shared(pingRecvBuf,finalRecvBuf,status,requestID,destRank)	\
-  shared(crossComm,crossCommRank,pingNodeA,pingNodeB,totalReps)
+#pragma omp parallel default(none) private(i, repIter)                         \
+  shared(dataSize, sizeofBuffer, pingSendBuf, globalIDarray)                   \
+    shared(pingRecvBuf, finalRecvBuf, status, requestID, destRank)             \
+      shared(crossComm, crossCommRank, pingNodeA, pingNodeB, totalReps)
   {
     /* loop totalRep times */
-    for (repIter = 1; repIter <= totalReps; repIter++){
+    for (repIter = 1; repIter <= totalReps; repIter++) {
+      if (crossCommRank == pingNodeA || crossCommRank == pingNodeB) {
+        /* Each thread writes its globalID to its part of
+         * pingSendBuf with an omp for.
+         */
+#pragma omp for schedule(static, dataSize)
 
-      if (crossCommRank == pingNodeA || crossCommRank == pingNodeB){
-	/* Each thread writes its globalID to its part of
-	 * pingSendBuf with an omp for.
-	 */
-#pragma omp for schedule(static,dataSize)
-
-	for (i=0; i<sizeofBuffer; i++){
-	  pingSendBuf[i] = globalIDarray[myThreadID];
-	}
-	/* Implicit barrier here takes care of necessary synchronisation. */
+        for (i = 0; i < sizeofBuffer; i++) {
+          pingSendBuf[i] = globalIDarray[myThreadID];
+        }
+        /* Implicit barrier here takes care of necessary synchronisation. */
 
 #pragma omp master
-	{
-	  /* Master thread of each process starts send. */
-	  MPI_Isend(pingSendBuf, sizeofBuffer, MPI_INT, \
-		    destRank, TAG, crossComm, &requestID);
+        {
+          /* Master thread of each process starts send. */
+          MPI_Isend(pingSendBuf, sizeofBuffer, MPI_INT, destRank, TAG,
+                    crossComm, &requestID);
 
-	  /* Processes then wait for message. */
-	  MPI_Recv(pingRecvBuf, sizeofBuffer, MPI_INT, \
-		   destRank, TAG, crossComm, &status);
+          /* Processes then wait for message. */
+          MPI_Recv(pingRecvBuf, sizeofBuffer, MPI_INT, destRank, TAG, crossComm,
+                   &status);
 
-	  /* Finish the send operation with an MPI_Wait */
-	  MPI_Wait(&requestID, &status);
-	}
-	/* Barrier to ensure master thread has completed transfer. */
+          /* Finish the send operation with an MPI_Wait */
+          MPI_Wait(&requestID, &status);
+        }
+        /* Barrier to ensure master thread has completed transfer. */
 #pragma omp barrier
 
-	/* Each thread reads its part of the received buffer */
-#pragma omp for schedule(static,dataSize)
-	for (i=0; i<sizeofBuffer; i++){
-	  finalRecvBuf[i] = pingRecvBuf[i];
-	}
-
+        /* Each thread reads its part of the received buffer */
+#pragma omp for schedule(static, dataSize)
+        for (i = 0; i < sizeofBuffer; i++) { finalRecvBuf[i] = pingRecvBuf[i]; }
       }
     } /* End repetitions loop */
 
   } /* End parallel region */
 
   return 0;
-
 }
 
 /*-----------------------------------------------------------*/
 /* multipleMultiPingping                                     */
-/* 															 */
+/*                                                           */
 /* All processes with crossCommRank of pingNodeA and         */
 /* pingNodeB in crossComm send a message to each other.      */
 /* Multiple threads take part in the communication.          */
 /*-----------------------------------------------------------*/
-int multipleMultiPingping(int totalReps, int dataSize){
+int multipleMultiPingping(int totalReps, int dataSize) {
   int repIter, i;
   int destRank;
   int lBound;
 
   /* set destRank to be id of other process */
-  if (crossCommRank == pingNodeA){
+  if (crossCommRank == pingNodeA) {
     destRank = pingNodeB;
-  }
-  else if (crossCommRank == pingNodeB){
+  } else if (crossCommRank == pingNodeB) {
     destRank = pingNodeA;
   }
 
   /* Open parallel region */
-#pragma omp parallel default(none)				\
-  private(i,repIter,lBound,requestID,status)			\
-  shared(dataSize,sizeofBuffer,pingSendBuf,globalIDarray)	\
-  shared(pingRecvBuf,finalRecvBuf,destRank,crossComm)		\
-  shared(crossCommRank,pingNodeA,pingNodeB,totalReps)
+#pragma omp parallel default(none) private(i, repIter, lBound, requestID,      \
+                                           status)                             \
+  shared(dataSize, sizeofBuffer, pingSendBuf, globalIDarray)                   \
+    shared(pingRecvBuf, finalRecvBuf, destRank, crossComm)                     \
+      shared(crossCommRank, pingNodeA, pingNodeB, totalReps)
   {
-
     /* loop totalRep times */
-    for (repIter = 1; repIter <= totalReps; repIter++){
+    for (repIter = 1; repIter <= totalReps; repIter++) {
+      if (crossCommRank == pingNodeA || crossCommRank == pingNodeB) {
+        /* Calculate lower bound of each threads portion
+         * of the data array.
+         */
+        lBound = (myThreadID * dataSize);
 
-      if (crossCommRank == pingNodeA || crossCommRank == pingNodeB){
+        /* Each thread writes to its part of pingSendBuf */
+#pragma omp for nowait schedule(static, dataSize)
 
-	/* Calculate lower bound of each threads portion
-	 * of the data array.
-	 */
-	lBound = (myThreadID * dataSize);
+        for (i = 0; i < sizeofBuffer; i++) {
+          pingSendBuf[i] = globalIDarray[myThreadID];
+        }
 
-	/* Each thread writes to its part of pingSendBuf */
-#pragma omp for nowait schedule(static,dataSize)
+        /* Each thread starts send of dataSize items from
+         * pingSendBuf.
+         */
+        MPI_Isend(&pingSendBuf[lBound], dataSize, MPI_INT, destRank, myThreadID,
+                  crossComm, &requestID);
 
-	for (i=0; i<sizeofBuffer; i++){
-	  pingSendBuf[i] = globalIDarray[myThreadID];
-	}
+        /* Thread then waits for message from destRank
+         * with tag equal to its threadID.
+         */
+        MPI_Recv(&pingRecvBuf[lBound], dataSize, MPI_INT, destRank, myThreadID,
+                 crossComm, &status);
 
-	/* Each thread starts send of dataSize items from
-	 * pingSendBuf.
-	 */
-	MPI_Isend(&pingSendBuf[lBound], dataSize, MPI_INT, \
-		  destRank, myThreadID, crossComm, &requestID);
+        /* Thread completes send using MPI_Wait */
+        MPI_Wait(&requestID, &status);
 
-	/* Thread then waits for message from destRank
-	 * with tag equal to its threadID.
-	 */
-	MPI_Recv(&pingRecvBuf[lBound], dataSize, MPI_INT, destRank, \
-		 myThreadID, crossComm, &status);
+        /* Each thread reads its part of received buffer. */
+#pragma omp for nowait schedule(static, dataSize)
 
-
-	/* Thread completes send using MPI_Wait */
-	MPI_Wait(&requestID, &status);
-
-	/* Each thread reads its part of received buffer. */
-#pragma omp for nowait schedule(static,dataSize)
-
-	for (i=0; i<sizeofBuffer; i++){
-	  finalRecvBuf[i] = pingRecvBuf[i];
-	}
-
-
+        for (i = 0; i < sizeofBuffer; i++) { finalRecvBuf[i] = pingRecvBuf[i]; }
       }
 
     } /* End repetitions loop */
@@ -395,12 +360,10 @@ int multipleMultiPingping(int totalReps, int dataSize){
 /* Allocates space for the main data arrays.                 */
 /* Size of each array is specified by subroutine argument.   */
 /*-----------------------------------------------------------*/
-int allocateMultiPingpingData(int sizeofBuffer){
-
-  if (crossCommRank == pingNodeA || crossCommRank == pingNodeB){
-
-    pingSendBuf = (int *)malloc(sizeof(int) * sizeofBuffer);
-    pingRecvBuf = (int *)malloc(sizeof(int) * sizeofBuffer);
+int allocateMultiPingpingData(int sizeofBuffer) {
+  if (crossCommRank == pingNodeA || crossCommRank == pingNodeB) {
+    pingSendBuf  = (int *)malloc(sizeof(int) * sizeofBuffer);
+    pingRecvBuf  = (int *)malloc(sizeof(int) * sizeofBuffer);
     finalRecvBuf = (int *)malloc(sizeof(int) * sizeofBuffer);
   }
 
@@ -412,14 +375,11 @@ int allocateMultiPingpingData(int sizeofBuffer){
 /*                                                           */
 /* Free allocated memory for main data arrays.               */
 /*-----------------------------------------------------------*/
-int freeMultiPingpingData(){
-
-  if (crossCommRank == pingNodeA || crossCommRank == pingNodeB){
-
+int freeMultiPingpingData() {
+  if (crossCommRank == pingNodeA || crossCommRank == pingNodeB) {
     free(pingSendBuf);
     free(pingRecvBuf);
     free(finalRecvBuf);
-
   }
 
   return 0;
@@ -431,7 +391,7 @@ int freeMultiPingpingData(){
 /* Verifies the the multi-pingping benchmark worked          */
 /* correctly.                                                */
 /*-----------------------------------------------------------*/
-int testMultiPingping(int sizeofBuffer, int dataSize){
+int testMultiPingping(int sizeofBuffer, int dataSize) {
   int i;
   int testFlag, localTestFlag;
 
@@ -440,17 +400,15 @@ int testMultiPingping(int sizeofBuffer, int dataSize){
 
   /* Testing done for processes on pingNodeA & pingNodeB */
   if (crossCommRank == pingNodeA || crossCommRank == pingNodeB) {
-
     /* allocate space for testBuf */
     testBuf = (int *)malloc(sizeof(int) * sizeofBuffer);
 
     /* Construct testBuf with correct values */
-#pragma omp parallel for default(none)					\
-  private(i)								\
-  shared(otherPingRank,numThreads,dataSize,sizeofBuffer,testBuf)	\
-  schedule(static,dataSize)
+#pragma omp parallel for default(none) private(i)                              \
+  shared(otherPingRank, numThreads, dataSize, sizeofBuffer, testBuf)           \
+    schedule(static, dataSize)
 
-    for (i=0; i<sizeofBuffer; i++){
+    for (i = 0; i < sizeofBuffer; i++) {
       /* calculate globalID of thread expected in finalRecvBuf.
        * This is done using otherPingRank.
        */
@@ -458,10 +416,8 @@ int testMultiPingping(int sizeofBuffer, int dataSize){
     }
 
     /* Compare each element of testBuf and finalRecvBuf */
-    for (i=0; i<sizeofBuffer; i++){
-      if (testBuf[i] != finalRecvBuf[i]){
-	localTestFlag = FALSE;
-      }
+    for (i = 0; i < sizeofBuffer; i++) {
+      if (testBuf[i] != finalRecvBuf[i]) { localTestFlag = FALSE; }
     }
 
     /* Free space for testBuf */
@@ -471,11 +427,8 @@ int testMultiPingping(int sizeofBuffer, int dataSize){
   /* Reduce testFlag into master with logical AND */
   MPI_Reduce(&localTestFlag, &testFlag, 1, MPI_INT, MPI_LAND, 0, comm);
 
-
   /* master sets testOutcome flag */
-  if (myMPIRank == 0){
-    setTestOutcome(testFlag);
-  }
+  if (myMPIRank == 0) { setTestOutcome(testFlag); }
 
   return 0;
 }
