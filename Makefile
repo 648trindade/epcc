@@ -15,34 +15,34 @@ CFLAGS=
 
 EXE=	mixedModeBenchmark
 
-SRC=	parallelEnvironment.c \
-	benchmarkSetup.c \
-	output.c \
-	pt_to_pt_pingpong.c \
-	pt_to_pt_pingping.c \
-	pt_to_pt_multiPingpong.c \
-	pt_to_pt_multiPingping.c \
-	pt_to_pt_haloexchange.c \
-	collective_barrier.c \
-	collective_broadcast.c \
-	collective_scatterGather.c \
-	collective_reduction.c \
-	collective_alltoall.c \
-	mixedModeBenchmarkDriver.c
+SRC=	src/parallelEnvironment.c \
+	src/benchmarkSetup.c \
+	src/output.c \
+	src/pt_to_pt_pingpong.c \
+	src/pt_to_pt_pingping.c \
+	src/pt_to_pt_multiPingpong.c \
+	src/pt_to_pt_multiPingping.c \
+	src/pt_to_pt_haloexchange.c \
+	src/collective_barrier.c \
+	src/collective_broadcast.c \
+	src/collective_scatterGather.c \
+	src/collective_reduction.c \
+	src/collective_alltoall.c \
+	src/mixedModeBenchmarkDriver.c
 
-INC=	parallelEnvironment.h \
-	benchmarkSetup.h \
-	output.h \
-	pt_to_pt_pingpong.h \
-	pt_to_pt_pingping.h \
-	pt_to_pt_multiPingpong.h \
-	pt_to_pt_multiPingping.h \
-	pt_to_pt_haloexchange.h \
-	collective_barrier.h \
-	collective_broadcast.h \
-	collective_scatterGather.h \
-	collective_reduction.h \
-	collective_alltoall.h
+INC=	src/parallelEnvironment.h \
+	src/benchmarkSetup.h \
+	src/output.h \
+	src/pt_to_pt_pingpong.h \
+	src/pt_to_pt_pingping.h \
+	src/pt_to_pt_multiPingpong.h \
+	src/pt_to_pt_multiPingping.h \
+	src/pt_to_pt_haloexchange.h \
+	src/collective_barrier.h \
+	src/collective_broadcast.h \
+	src/collective_scatterGather.h \
+	src/collective_reduction.h \
+	src/collective_alltoall.h
 
 #
 # No need to edit below this line
@@ -60,7 +60,7 @@ OBJ=	$(SRC:.c=.o)
 all:	$(EXE)
 
 $(EXE):	$(OBJ)
-	$(CC) $(CFLAGS) -o $@ $(OBJ) $(LFLAGS)
+	$(CC) $(CFLAGS) -o $@ $(notdir $(OBJ)) $(LFLAGS)
 
 $(OBJ):	$(INC) $(MF)
 

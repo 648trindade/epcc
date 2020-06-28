@@ -9,33 +9,33 @@ find_package(MPI REQUIRED)
 include_directories(${MPI_INCLUDE_PATH})
 
 SET(SOURCES
-    mixedModeBenchmarkDriver.c
-    benchmarkSetup.h
-    benchmarkSetup.c
-    parallelEnvironment.h
-    parallelEnvironment.c
-    output.h
-    output.c
-    pt_to_pt_pingpong.h
-    pt_to_pt_pingpong.c
-    pt_to_pt_pingping.h
-    pt_to_pt_pingping.c
-    pt_to_pt_multiPingpong.h
-    pt_to_pt_multiPingpong.c
-    pt_to_pt_multiPingping.h
-    pt_to_pt_multiPingping.c
-    pt_to_pt_haloexchange.h
-    pt_to_pt_haloexchange.c
-    collective_barrier.h
-    collective_barrier.c
-    collective_broadcast.h
-    collective_broadcast.c
-    collective_scatterGather.h
-    collective_scatterGather.c
-    collective_reduction.h
-    collective_reduction.c
-    collective_alltoall.h
-    collective_alltoall.c
+    src/mixedModeBenchmarkDriver.c
+    src/benchmarkSetup.h
+    src/benchmarkSetup.c
+    src/parallelEnvironment.h
+    src/parallelEnvironment.c
+    src/output.h
+    src/output.c
+    src/pt_to_pt_pingpong.h
+    src/pt_to_pt_pingpong.c
+    src/pt_to_pt_pingping.h
+    src/pt_to_pt_pingping.c
+    src/pt_to_pt_multiPingpong.h
+    src/pt_to_pt_multiPingpong.c
+    src/pt_to_pt_multiPingping.h
+    src/pt_to_pt_multiPingping.c
+    src/pt_to_pt_haloexchange.h
+    src/pt_to_pt_haloexchange.c
+    src/collective_barrier.h
+    src/collective_barrier.c
+    src/collective_broadcast.h
+    src/collective_broadcast.c
+    src/collective_scatterGather.h
+    src/collective_scatterGather.c
+    src/collective_reduction.h
+    src/collective_reduction.c
+    src/collective_alltoall.h
+    src/collective_alltoall.c
 )
 
 add_executable(epcc ${SOURCES})
