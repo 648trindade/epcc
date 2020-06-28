@@ -46,6 +46,7 @@
 #include "benchmarkSetup.h"
 
 /* function prototypes */
+int benchmarkSupport(int required);
 int initParallelEnv();
 int finaliseParallelEnv();
 int findRank(int rankIn);
@@ -54,7 +55,7 @@ int compareProcNames(int rankA, int rankB);
 int setupCommunicators();
 int procNameToHash();
 int exchangeWorldRanks(int nodeA, int nodeB, int *otherWorldRank);
-int sendProcName(int destNode, int srcNode, char *destProcName);
+void sendProcName(int destNode, int srcNode, char *destProcName);
 int crossCommBalance(int nodeA, int nodeB);
 
 /* variable declaration */
@@ -76,7 +77,7 @@ int sizeInteger;
 int PPRanks[2]; /* ranks for pingpong or pingping */
 
 /* OpenMP variables */
-int myThreadID, numThreads;
+static int myThreadID, numThreads;
 /* make myThreadID a thread private variable */
 #pragma omp threadprivate(myThreadID)
 /*Array to hold the global ID for each thread */

@@ -34,6 +34,7 @@
 /* Setup functions for Mixed mode benchmark program.         */
 /* Routines to setup the benchmark.                          */
 /*-----------------------------------------------------------*/
+#include <ctype.h>
 #include "benchmarkSetup.h"
 #include "parallelEnvironment.h"
 /*-----------------------------------------------------------*/

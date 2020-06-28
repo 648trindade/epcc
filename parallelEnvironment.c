@@ -317,7 +317,7 @@ int exchangeWorldRanks(int nodeA, int nodeB, int *otherWorldRank){
 /* Sends the processor name from processes in destNode       */
 /* of crossComm to srcNode.                                  */
 /*-----------------------------------------------------------*/
-int sendProcName(int destNode, int srcNode, char *destProcName){
+void sendProcName(int destNode, int srcNode, char *destProcName){
 
 	/* MPI processes under srcNode of crossComm send their
 	 * processor name to destNode.
